@@ -1,11 +1,63 @@
 import React, { Component } from 'react';
 import { Button, View, Text, FlatList,  } from 'react-native';
 import { StackNavigator, } from 'react-navigation';
+import { Client, Message } from 'react-native-paho-mqtt';
+import { secrets } from './secrets';
 
 let messages = [];
-messages.push("test");
+let connected = false;
 
+//Set up an in-memory alternative to global localStorage
+const myStorage = {
+    setItem: (key, item) => {
+        myStorage[key] = item;
+    },
+    getItem: (key) => myStorage[key],
+    removeItem: (key) => {
+        delete myStorage[key];
+    },
+};
 
+// Create a client instance
+const client = new Client({ uri: 'ws://broker.shiftr.io:80/ws', clientId: 'HjemApp', storage: myStorage });
+
+// set event handlers
+client.on('connectionLost', (responseObject) => {
+    if (responseObject.errorCode !== 0) {
+        connected = false;
+        messages.push("Lost conn");
+        console.log(responseObject.errorMessage);
+    }
+});
+
+client.on('messageReceived', (message) => {
+    console.log(message.payloadString);
+    messages.push(message.payloadString);
+});
+
+function conn() {
+    client.connect({ userName: secrets.username, password: secrets.password})
+        .then(() => {
+            // Once a connection has been made, make a subscription and send a message.
+            console.log('onConnect');
+            connected = true;
+            messages.push("Connected");
+            return client.subscribe("sb/e1/kjk/#");
+        })
+        .then(() => {
+            const message = new Message('Hello');
+            message.destinationName = "sb/e1/kjk/x";
+            client.send(message);
+        })
+        .catch((responseObject) => {
+            if (responseObject.errorCode !== 0) {
+                console.log('onConnectionLost:' + responseObject.errorMessage);
+            }
+        })
+    ;
+}
+
+conn();
 
 class HomeScreen extends Component {
     static navigationOptions = {
@@ -98,6 +150,12 @@ class MessageScreen extends Component {
             </View>
         );
     };
+
+    componentDidMount() {
+        if (!connected) {
+            conn();
+        }
+    }
 }
 
 const App = StackNavigator({
