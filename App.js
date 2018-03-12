@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, View, Text } from 'react-native';
+import { Button, View, Text, FlatList,  } from 'react-native';
 import { StackNavigator, } from 'react-navigation';
 
 class HomeScreen extends Component {
@@ -48,6 +48,13 @@ class MonitorOne extends Component {
     };
 }
 
+const monitoring = [
+        {key: 'R_G1', name: 'Garasjedør'},
+        {key: 'R_T1', name: 'Temperatur inne Reppe'},
+        {key: 'S_T1', name: 'Temperatur inne Smibakken'},
+        {key: 'S_P1', name: 'Vantrykk Smibakken'},
+    ];
+
 class MonitorAllScreen extends Component {
     static navigationOptions = {
         title: 'Alle alarmer',
@@ -55,13 +62,14 @@ class MonitorAllScreen extends Component {
     render() {
         return (
             <View>
-                <MonitorOne name='Garasjedør' />
-                <MonitorOne name='Temperatur inne Reppe' />
-                <MonitorOne name='Vanntrykk Smibakken' />
-                <MonitorOne name='Temperatur Smibakken' />
+                <Text>Alle alarmer</Text>
+                <FlatList
+                    let data={monitoring}
+                    renderItem={({item}) => <Text>{item.name}</Text>}
+                />
             </View>
         );
-    }
+    };
 }
 
 const App = StackNavigator({
@@ -69,5 +77,6 @@ const App = StackNavigator({
     Config: {screen: ConfigScreen},
     MonitorAll:  {screen: MonitorAllScreen},
 });
+
 
 export default App;
