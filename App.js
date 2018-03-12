@@ -2,6 +2,11 @@ import React, { Component } from 'react';
 import { Button, View, Text, FlatList,  } from 'react-native';
 import { StackNavigator, } from 'react-navigation';
 
+let messages = [];
+messages.push("test");
+
+
+
 class HomeScreen extends Component {
     static navigationOptions = {
         title: 'HjemApp',
@@ -20,6 +25,12 @@ class HomeScreen extends Component {
                     title="Alle alarmer"
                     onPress={() =>
                         navigate('MonitorAll')
+                    }
+                />
+                <Button
+                    title="Alle meldinger"
+                    onPress={() =>
+                        navigate('Messages')
                     }
                 />
             </View>
@@ -72,10 +83,28 @@ class MonitorAllScreen extends Component {
     };
 }
 
+class MessageScreen extends Component {
+    static navigationOptions = {
+        title: 'Alle meldinger',
+    };
+    render() {
+        return (
+            <View>
+                <Text>Alle meldinger</Text>
+                <FlatList
+                    let data={messages}
+                    renderItem={({item}) => <Text>{item}</Text>}
+                />
+            </View>
+        );
+    };
+}
+
 const App = StackNavigator({
     Home: { screen: HomeScreen },
     Config: {screen: ConfigScreen},
     MonitorAll:  {screen: MonitorAllScreen},
+    Messages: {screen: MessageScreen},
 });
 
 
