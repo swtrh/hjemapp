@@ -1,8 +1,13 @@
 import React, { Component } from 'react';
-import { Button, View, Text, FlatList,  } from 'react-native';
+import { Button, View, Text, FlatList, TextInput, } from 'react-native';
 import { StackNavigator, } from 'react-navigation';
 import { Client, Message } from 'react-native-paho-mqtt';
 import { secrets } from './secrets';
+
+
+const testTopic = "sb/e1/kjk/x";
+const testSubscribeTopic = "sb/e1/kjk/#";
+const testHost = "ws://broker.shiftr.io:80/ws";
 
 let messages = [];
 let connected = false;
@@ -18,8 +23,8 @@ const myStorage = {
     },
 };
 
-// Create a client instance
-const client = new Client({ uri: 'ws://broker.shiftr.io:80/ws', clientId: 'HjemApp', storage: myStorage });
+// Create a mqtt client instance
+const client = new Client({ uri: testHost, clientId: 'HjemApp', storage: myStorage });
 
 // set event handlers
 client.on('connectionLost', (responseObject) => {
@@ -36,27 +41,30 @@ client.on('messageReceived', (message) => {
 });
 
 function conn() {
-    client.connect({ userName: secrets.username, password: secrets.password})
-        .then(() => {
-            // Once a connection has been made, make a subscription and send a message.
-            console.log('onConnect');
-            connected = true;
-            messages.push("Connected");
-            return client.subscribe("sb/e1/kjk/#");
-        })
-        .then(() => {
-            const message = new Message('Hello');
-            message.destinationName = "sb/e1/kjk/x";
-            client.send(message);
-        })
-        .catch((responseObject) => {
-            if (responseObject.errorCode !== 0) {
-                console.log('onConnectionLost:' + responseObject.errorMessage);
-            }
-        })
-    ;
+    if (!connected) {
+        client.connect({ userName: secrets.username, password: secrets.password})
+            .then(() => {
+                // Once a connection has been made, make a subscription and send a message.
+                console.log('onConnect');
+                connected = true;
+                messages.push("Connected");
+                return client.subscribe(testSubscribeTopic);
+            })
+            .then(() => {
+                const message = new Message('Hello');
+                message.destinationName = testTopic;
+                client.send(message);
+            })
+            .catch((responseObject) => {
+                if (responseObject.errorCode !== 0) {
+                    console.log('onConnectionLost:' + responseObject.errorMessage);
+                }
+            })
+        ;
+    }
 }
 
+//Initial connection to message queue
 conn();
 
 class HomeScreen extends Component {
@@ -77,6 +85,12 @@ class HomeScreen extends Component {
                     title="Alle alarmer"
                     onPress={() =>
                         navigate('MonitorAll')
+                    }
+                />
+                <Button
+                    title="Kringkast melding"
+                    onPress={() =>
+                        navigate('Broadcast')
                     }
                 />
                 <Button
@@ -114,8 +128,8 @@ class MonitorOne extends Component {
 const monitoring = [
         {key: 'R_G1', name: 'Garasjedør'},
         {key: 'R_T1', name: 'Temperatur inne Reppe'},
-        {key: 'S_T1', name: 'Temperatur inne Smibakken'},
-        {key: 'S_P1', name: 'Vantrykk Smibakken'},
+        {key: 'S_T1', name: 'Temperatur inne Smibakken', topic: 'sb/e1/kjk/t', high: 30.0, low: 5.0},
+        {key: 'S_P1', name: 'Vanntrykk Smibakken'},
     ];
 
 class MonitorAllScreen extends Component {
@@ -152,6 +166,44 @@ class MessageScreen extends Component {
     };
 
     componentDidMount() {
+        conn();
+    }
+}
+
+class BroadcastScreen extends Component {
+    static navigationOptions = {
+        title: 'Kringkast melding',
+    };
+
+    constructor(props) {
+        super(props);
+        this.state = { text: '<Skriv noe her>' };
+    }
+
+    render() {
+        return (
+            <View>
+                <TextInput
+                    style={{height: 40, borderColor: 'gray', borderWidth: 1}}
+                    onChangeText={(text) => {
+                        this.setState({text});
+                    }}
+                    value={this.state.text}
+                />
+                <Button
+                    title="Send melding"
+                    onPress={ () => {
+                            const message = new Message(this.state.text);
+                            message.destinationName = testTopic;
+                            client.send(message);
+                        }
+                    }
+                />
+            </View>
+        );
+    }
+
+    componentDidMount() {
         if (!connected) {
             conn();
         }
@@ -163,6 +215,7 @@ const App = StackNavigator({
     Config: {screen: ConfigScreen},
     MonitorAll:  {screen: MonitorAllScreen},
     Messages: {screen: MessageScreen},
+    Broadcast: {screen: BroadcastScreen},
 });
 
 
