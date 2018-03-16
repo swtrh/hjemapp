@@ -31,8 +31,8 @@ client.on('connectionLost', (responseObject) => {
 });
 
 client.on('messageReceived', (message) => {
-    console.log(message.payloadString);
-    messages.push(message.payloadString);
+    console.log(JSON.stringify(message) + ': ' + message.payloadString);
+    messages.push({topic: message._destinationName, value: message.payloadString});
 });
 
 function conn() {

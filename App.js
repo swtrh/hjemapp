@@ -111,7 +111,7 @@ class MessageScreen extends Component {
                 <Text>Alle meldinger</Text>
                 <FlatList
                     let data={messages}
-                    renderItem={({item}) => <Text>{item}</Text>}
+                    renderItem={({item}) => <Text>{item.topic} reports {item.value}</Text>}
                 />
             </View>
         );
@@ -119,6 +119,10 @@ class MessageScreen extends Component {
 
     componentDidMount() {
         conn();
+    }
+
+    onNewMessage() {
+
     }
 }
 
@@ -166,7 +170,7 @@ const App = StackNavigator({
     MonitorAll:  {screen: MonitorAllScreen},
     Messages: {screen: MessageScreen},
     Broadcast: {screen: BroadcastScreen},
-    MonitorOne:  {screen: MonitorOneScreen}, //( {tag: 'S_T1'} )
+    MonitorOne:  {screen: MonitorOneScreen},
 });
 
 
